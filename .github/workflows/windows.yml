@@ -1,0 +1,50 @@
+name: Windows build and checks
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '9.0.x'
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - name: Download pinned toolchain
+        shell: pwsh
+        run: |
+          Invoke-WebRequest https://github.com/skeeto/w64devkit/releases/download/v2.11.0/w64devkit-x64-2.11.0.7z.exe -OutFile toolchain.exe
+          if ((Get-FileHash toolchain.exe -Algorithm SHA256).Hash -ne '54C2BB9962E8A30C8270E34C5EFC3D5FEE579F53087FA7D435B95FBBA2AF7B2B') { throw 'Toolchain checksum mismatch' }
+          7z x toolchain.exe -otools -y
+          if ($LASTEXITCODE -ne 0) { throw 'Toolchain extraction failed' }
+      - name: Build core from pinned source
+        shell: pwsh
+        run: ./scripts/build-core.ps1 -ToolchainPath "$pwd/tools/w64devkit"
+      - name: Build frontend
+        run: dotnet build src/MarioPC -c Release
+      - name: Interface and input checks without game data
+        shell: pwsh
+        run: |
+          dotnet src/MarioPC/bin/Release/net9.0-windows/MarioPC.dll --self-test local/self-test
+          if ($LASTEXITCODE -ne 0) { throw 'Self-test failed' }
+      - name: Package regression tests
+        run: python -m unittest discover -s tests
+      - name: Package and audit
+        shell: pwsh
+        run: ./scripts/package-windows.ps1 -ToolchainPath "$pwd/tools/w64devkit"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: MarioPC-windows-x64
+          path: |
+            artifacts/v0.1.0-alpha.1/*
+            local/self-test/*
+          if-no-files-found: error

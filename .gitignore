@@ -1,0 +1,13 @@
+**/bin/
+**/obj/
+local/
+dist/
+artifacts/
+*.log
+*.nds
+*.sav
+*.state
+*.zip
+*.pdb
+profile.json
+.vs/

@@ -1,0 +1,3 @@
+[submodule "core/melonds"]
+	path = core/melonds
+	url = https://github.com/libretro/melonDS.git
