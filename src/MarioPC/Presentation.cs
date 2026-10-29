@@ -10,7 +10,7 @@ public sealed record GameView(Bitmap Frame,int Scene,bool Bottom,Bitmap? Worldma
 public sealed class Presentation
 {
     public static readonly RectangleF Screen=new(256,60,768,576);
-    public static readonly RectangleF ReserveRect=new(1060,440,176,100);
+    public static readonly RectangleF ReserveRect=new(1060,440,176,128);
     public List<Hit> Hits {get;}=[];
     public int Selected {get;set;}
     public ActionKey? Capture {get;set;}
@@ -64,13 +64,16 @@ public sealed class Presentation
         Text(g,profile.Label(ActionKey.GamePause)+"  •  pause do jogo",1060,234,16,Muted,width:190);
         Text(g,"Proporção original 4:3",1060,272,14,Muted,width:185);
         Text(g,"Mapa, item, vidas e moedas reunidos nesta janela.",1060,308,15,Muted,width:180);
+        if(core.Scene is 3 or 9 && !view.Bottom)
+        {
+            Image(g,core.Frame,new(28,330,204,56),new(0,192,102,28),false);
+            Image(g,core.Frame,new(28,404,192,56),new(160,192,96,28),false);
+        }
         if(core.Scene==3 && !view.Bottom)
         {
             Button(g,ReserveRect,"ITEM  ["+profile.Label(ActionKey.Reserve)+"]","reserve");
             // Actual reserve graphic, star coins/score, and course progress are sampled from the live ROM output.
             Image(g,core.Frame,new(1116,494,64,64),new(184,192+120,64,64),false);
-            Image(g,core.Frame,new(28,330,204,56),new(0,192,102,28),false);
-            Image(g,core.Frame,new(28,404,192,56),new(160,192,96,28),false);
             Box(g,new(256,650,768,124),Card);
             Image(g,core.Frame,new(268,658,252,108),new(0,192+104,168,80),false);
             Image(g,core.Frame,new(552,658,448,112),new(0,192+32,256,64),false);

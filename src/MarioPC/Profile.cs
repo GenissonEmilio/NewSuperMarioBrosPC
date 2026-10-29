@@ -24,6 +24,7 @@ public sealed class Profile
         Profile p;
         try { p=JsonSerializer.Deserialize<Profile>(File.ReadAllText(Path.Combine(root,"profile.json")),Options) ?? new(); }
         catch { p=new(); }
+        p.Bindings??=Defaults();
         var used=new HashSet<Keys>();
         foreach(var (a,k) in Defaults())
             if(!p.Bindings.TryGetValue(a,out var assigned) || !Allowed(assigned) || !used.Add(assigned))

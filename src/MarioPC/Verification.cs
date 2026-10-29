@@ -69,6 +69,7 @@ public static class Verification
         Check("Windows key rejected",!p.Bind(ActionKey.Jump,Keys.LWin));
         Check("modifier normalized",Profile.Normalize(Keys.RShiftKey)==Keys.ShiftKey);
         p.Save(output);var restored=Profile.Load(output);Check("bindings persist",restored.Bindings[ActionKey.Jump]==Keys.D);
+        p=new Profile(); // Capture the shipping defaults, after testing the customized profile separately.
         var ui=new Presentation{HasRom=true};
         foreach(var size in new[]{new Size(1280,800),new Size(1024,768),new Size(1920,1080)})
         {
@@ -114,6 +115,16 @@ public static class Verification
         Check("world map stays main scene",!GameSession.UseMenuSurface(9,true));
         Check("menu gets single main surface",GameSession.UseMenuSurface(4,true));
         Check("cinematic does not show blank menu",!GameSession.UseMenuSurface(4,false));
+        using(var window=new MainWindow(Path.Combine(output,"window-data"),false))
+        {
+            window.TestAction("controls");Check("window opens controls tab",window.TestPresentation.Panel==Panel.Controls);
+            window.TestAction("bind:Jump");window.TestDown(Keys.F);window.TestUp(Keys.F);
+            Check("window binding capture updates jump",window.TestProfile.Bindings[ActionKey.Jump]==Keys.F);
+            Check("window binding persists",Profile.Load(Path.Combine(output,"window-data")).Bindings[ActionKey.Jump]==Keys.F);
+            window.TestDown(Keys.Escape);window.TestUp(Keys.Escape);Check("window back returns home",window.TestPresentation.Panel==Panel.Home);
+            window.TestAction("settings");window.TestAction("volume");Check("window volume action",window.TestProfile.Volume==100);
+            window.TestDown(Keys.Escape);window.TestUp(Keys.Escape);Check("window settings back",window.TestPresentation.Panel==Panel.Home);
+        }
         bool rejected=false;try{RomImport.Validate(new byte[1024]);}catch(InvalidDataException){rejected=true;}Check("invalid ROM rejected",rejected);
         var result=new{success=checks.All(c=>(bool)c.GetType().GetProperty("pass")!.GetValue(c)!),checks};
         File.WriteAllText(Path.Combine(output,"self-test.json"),JsonSerializer.Serialize(result,Json));return result.success?0:1;

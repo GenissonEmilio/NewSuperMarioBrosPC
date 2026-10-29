@@ -8,9 +8,10 @@ public sealed class GameSession(Profile profile, string root) : IDisposable
     public Bitmap? WorldmapFrame {get;private set;}
     int touchFrames;
     Point pulseTarget;
+    bool leavingWorldmap;
     public void Start(bool resume=true,bool sound=true)
     {
-        Core?.Dispose();Core=null;Input.Clear();Paused=false;touchFrames=0;PointerHeld=false;
+        Core?.Dispose();Core=null;Input.Clear();Paused=false;touchFrames=0;PointerHeld=false;leavingWorldmap=false;
         WorldmapFrame?.Dispose();WorldmapFrame=null;
         Core=new RetroCore(Path.Combine(root,"game.nds"),root,Input,sound){Volume=profile.Volume};
         if(resume && File.Exists(Path.Combine(root,"resume.state")))
@@ -27,20 +28,25 @@ public sealed class GameSession(Profile profile, string root) : IDisposable
     {Paused=pause;Input.Release();touchFrames=0;PointerHeld=false;Core?.Silence();}
     public void PulseTouch(Point target){if(Core!=null && !Paused){pulseTarget=target;touchFrames=4;}}
     public void Reserve(){if(Core?.Scene==3)PulseTouch(new Point(215,152));}
-    public static bool UseMenuSurface(int scene,bool hasContent)=>scene==4 && hasContent;
+    public static bool UseMenuSurface(int scene,bool hasContent)=>scene is 4 or 7 or 14 && hasContent;
     public bool Bottom => UseMenuSurface(Core?.Scene??-1,Core?.BottomHasContent??false);
     public static readonly Point[] WorldTargets=[new(20,138),new(68,160),new(98,133),new(120,173),new(147,137),new(172,163),new(199,138),new(225,170)];
     public void Tick()
     {
         if(Core==null||Paused)return;
+        if(Core.Scene==9 && !leavingWorldmap && (Input.Joypad&257)!=0)
+        {CaptureWorldmap();leavingWorldmap=true;}
         if(touchFrames>0){Input.Touch=pulseTarget;touchFrames--;}
         else if(!PointerHeld)Input.Touch=null;
         Core.Volume=profile.Volume;Core.Step();
-        if(Core.Scene==9)
-        {
-            WorldmapFrame??=new Bitmap(256,384);
-            using var g=Graphics.FromImage(WorldmapFrame);g.DrawImageUnscaled(Core.Frame,0,0);
-        }
+        if(Core.Scene==9 && !leavingWorldmap)CaptureWorldmap();
+        if(Core.Scene!=9)leavingWorldmap=false;
+    }
+    void CaptureWorldmap()
+    {
+        if(Core is not RetroCore core)return;
+        WorldmapFrame??=new Bitmap(256,384);
+        using var g=Graphics.FromImage(WorldmapFrame);g.DrawImageUnscaled(core.Frame,0,0);
     }
     public bool PointerHeld {get;set;}
     public void SaveCheckpoint()

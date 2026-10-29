@@ -4,7 +4,7 @@ namespace MarioPC;
 
 public sealed class MainWindow : Form
 {
-    readonly string root=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"GenissonEmilio","NewSuperMarioBrosPC");
+    readonly string root;
     readonly Profile profile;
     readonly GameSession game;
     readonly Presentation ui=new();
@@ -15,12 +15,13 @@ public sealed class MainWindow : Form
     Rectangle windowBounds;
     bool exiting;
     bool mapFromPause;
-    public MainWindow()
+    public MainWindow(string? dataRoot=null,bool ticking=true)
     {
+        root=dataRoot??Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"GenissonEmilio","NewSuperMarioBrosPC");
         profile=Profile.Load(root);game=new(profile,root);
         Text="New Super Mario Bros. PC";ClientSize=new(1280,800);MinimumSize=new(800,540);
         StartPosition=FormStartPosition.CenterScreen;DoubleBuffered=true;KeyPreview=true;AllowDrop=true;
-        UpdateHome();timer.Tick+=(_,_)=>TickGame();timer.Start();last=clock.Elapsed.TotalSeconds;
+        UpdateHome();timer.Tick+=(_,_)=>TickGame();if(ticking)timer.Start();last=clock.Elapsed.TotalSeconds;
         DragEnter+=(_,e)=>{if(e.Data?.GetDataPresent(DataFormats.FileDrop)==true)e.Effect=DragDropEffects.Copy;};
         DragDrop+=(_,e)=>{if(ui.Panel==Panel.Home && e.Data?.GetData(DataFormats.FileDrop) is string[] f && f.Length==1)Import(f[0]);};
         Deactivate+=(_,_)=>{if(game.Core!=null)SetPanel(Panel.Pause);physical.Clear();};
@@ -33,6 +34,13 @@ public sealed class MainWindow : Form
             exiting=true;timer.Stop();game.Dispose();
         };
     }
+    internal Profile TestProfile=>profile;
+    internal Presentation TestPresentation=>ui;
+    internal void TestAction(string id)=>Activate(id);
+    internal void TestDown(Keys key)=>Key(key);
+    internal void TestUp(Keys key)=>OnKeyUp(new KeyEventArgs(key));
+    protected override void Dispose(bool disposing)
+    {if(disposing){timer.Dispose();game.Dispose();}base.Dispose(disposing);}
     void UpdateHome(){ui.HasRom=File.Exists(Path.Combine(root,"game.nds"));ui.HasCheckpoint=File.Exists(Path.Combine(root,"resume.state"));}
     void SetPanel(Panel panel)
     {ui.Panel=panel;ui.Selected=0;ui.Capture=null;Capture=false;game.Pause(panel!=Panel.Play);last=clock.Elapsed.TotalSeconds;Invalidate();}
