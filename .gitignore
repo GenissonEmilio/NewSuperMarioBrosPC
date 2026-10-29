@@ -11,3 +11,5 @@ artifacts/
 *.pdb
 profile.json
 .vs/
+__pycache__/
+*.pyc

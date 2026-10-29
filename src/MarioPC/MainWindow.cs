@@ -14,6 +14,7 @@ public sealed class MainWindow : Form
     double last;
     Rectangle windowBounds;
     bool exiting;
+    bool mapFromPause;
     public MainWindow()
     {
         profile=Profile.Load(root);game=new(profile,root);
@@ -34,7 +35,7 @@ public sealed class MainWindow : Form
     }
     void UpdateHome(){ui.HasRom=File.Exists(Path.Combine(root,"game.nds"));ui.HasCheckpoint=File.Exists(Path.Combine(root,"resume.state"));}
     void SetPanel(Panel panel)
-    {ui.Panel=panel;ui.Selected=0;ui.Capture=null;game.Pause(panel!=Panel.Play);last=clock.Elapsed.TotalSeconds;Invalidate();}
+    {ui.Panel=panel;ui.Selected=0;ui.Capture=null;Capture=false;game.Pause(panel!=Panel.Play);last=clock.Elapsed.TotalSeconds;Invalidate();}
     void TickGame()
     {
         double now=clock.Elapsed.TotalSeconds;
@@ -70,17 +71,23 @@ public sealed class MainWindow : Form
         if(ui.Panel==Panel.Play)
         {
             if(k==profile.Bindings[ActionKey.Pause]){SetPanel(Panel.Pause);return;}
-            if(k==profile.Bindings[ActionKey.Alternate]){game.Swap();return;}
+            if(k==profile.Bindings[ActionKey.Map]){OpenMap();return;}
             if(k==profile.Bindings[ActionKey.Reserve]){game.Reserve();return;}
             game.Input.Down(k);return;
         }
+        if(ui.Panel==Panel.Map && k==profile.Bindings[ActionKey.Map]){Back();return;}
         if(k==Keys.Escape || k==profile.Bindings[ActionKey.Pause]){Back();return;}
         if(k==Keys.Down || k==profile.Bindings[ActionKey.Down]){ui.Selected=(ui.Selected+1)%Math.Max(1,ui.Hits.Count);return;}
         if(k==Keys.Up || k==profile.Bindings[ActionKey.Up]){ui.Selected=(ui.Selected+ui.Hits.Count-1)%Math.Max(1,ui.Hits.Count);return;}
         if(k==Keys.Enter || k==Keys.Space || k==profile.Bindings[ActionKey.Confirm])
         {if(ui.Hits.Count>0)Activate(ui.Hits[Math.Clamp(ui.Selected,0,ui.Hits.Count-1)].Id);}
     }
-    void Back(){if(ui.Panel is Panel.Controls or Panel.Settings)SetPanel(game.Core==null?Panel.Home:Panel.Pause);else if(game.Core!=null)SetPanel(Panel.Play);}
+    void Back(){if(ui.Panel==Panel.Map)SetPanel(mapFromPause?Panel.Pause:Panel.Play);else if(ui.Panel is Panel.Controls or Panel.Settings)SetPanel(game.Core==null?Panel.Home:Panel.Pause);else if(game.Core!=null)SetPanel(Panel.Play);}
+    void OpenMap()
+    {
+        if(game.Core?.Scene is not (3 or 9)){ui.Notice="O mapa fica disponível na campanha e no mapa-múndi.";return;}
+        mapFromPause=ui.Panel==Panel.Pause;SetPanel(Panel.Map);
+    }
     protected override void OnMouseMove(MouseEventArgs e)
     {
         PointF p=Presentation.ToCanvas(e.Location,ClientSize);
@@ -112,6 +119,8 @@ public sealed class MainWindow : Form
         {
             ui.Notice="";
             if(id.StartsWith("bind:")){ui.Capture=Enum.Parse<ActionKey>(id[5..]);return;}
+            if(id.StartsWith("world:") && game.Core?.Scene==9)
+            {int index=int.Parse(id[6..]);SetPanel(Panel.Play);game.PulseTouch(GameSession.WorldTargets[index]);return;}
             switch(id)
             {
                 case "start":
@@ -119,13 +128,13 @@ public sealed class MainWindow : Form
                     Start(true);break;
                 case "boot":Start(false);break;
                 case "resume":SetPanel(Panel.Play);break;
+                case "map":OpenMap();break;
                 case "controls":SetPanel(Panel.Controls);break;
                 case "settings":SetPanel(Panel.Settings);break;
                 case "back":Back();break;
                 case "defaults":profile.Bindings=Profile.Defaults();profile.Save(root);ui.Notice="WASD e Espaço restaurados.";break;
                 case "volume":profile.Volume=(profile.Volume+25)%125;profile.Save(root);break;
                 case "smooth":profile.Smooth=!profile.Smooth;profile.Save(root);break;
-                case "screen":profile.ScreenMode=profile.ScreenMode switch {"Auto"=>"Top","Top"=>"Bottom",_=>"Auto"};profile.Save(root);break;
                 case "fullscreen":profile.Fullscreen=!profile.Fullscreen;ApplyFullscreen();profile.Save(root);break;
                 case "reserve":game.Reserve();break;
                 case "home":game.SaveCheckpoint();game.Dispose();UpdateHome();SetPanel(Panel.Home);break;

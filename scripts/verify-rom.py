@@ -149,6 +149,11 @@ def run(core_path, rom_path, out, script):
                 last_image.save(out / (name + "-ds.png"))
                 (out / (name + "-ram.bin")).write_bytes(ram)
                 entry = dict(name=name, frames=total, scene=scene, joypad=joypad, touch=touch)
+                player = struct.unpack_from("<I", ram, 0x8b35c)[0]
+                if scene == 3 and 0x02000000 <= player < 0x023ff000:
+                    entry["playerPosition"] = [v / 4096 for v in struct.unpack_from("<ii", ram, player - 0x02000000 + 0x60)]
+                if expected := step.get("expectScene"):
+                    assert scene == expected, (name, scene, expected)
                 results.append(entry)
                 print(json.dumps(entry), flush=True)
         size = lib.retro_serialize_size()

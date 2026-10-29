@@ -4,7 +4,8 @@ Primeira alpha da adaptação de New Super Mario Bros. para PC, **baseada em emu
 
 - WASD para movimento, Espaço para pular, Shift para correr/disparar e E para item reserva.
 - Aba Controles com remapeamento persistente e troca de conflitos.
-- Uma área principal: fases, menus e mapa; HUD com recortes ao vivo da ROM e acesso à outra tela via Tab.
+- Uma área principal com HUD recomposto: vidas, moedas, pontuação e item reserva juntos à fase, sem alternância de telas.
+- M / botão Mapa abre um painel de progresso e prévia do mapa visitado, com seleção de mundos pelo menu PC no mapa-múndi.
 - Pausa PC, pausa ao perder foco, filtros, volume e tela cheia.
 - Importação local de .nds/ZIP A2DE revisão 0, save original e snapshot ao sair.
 - Runtime .NET, núcleo compilado, licenças e fontes correspondentes disponíveis.

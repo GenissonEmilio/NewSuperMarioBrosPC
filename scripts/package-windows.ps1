@@ -32,7 +32,7 @@ NEW SUPER MARIO BROS. PC - ALPHA PARA WINDOWS X64
 Extraia a pasta inteira. Abra MarioPC.exe e importe sua ROM .nds ou ZIP.
 Esta versão suporta A2DE (USA/Australia), revisão 0.
 WASD: mover; Espaço: pular; Shift: correr/disparar; E: item reserva.
-Tab: outra tela; Esc: menu PC; Enter: confirmar; Backspace: voltar;
+M ou botão Mapa: mapa/progresso; Esc: menu PC; Enter: confirmar; Backspace: voltar;
 P: Start/pause original; F11: tela cheia. Todas as teclas podem ser remapeadas.
 No menu PC, abra Controles ou Configurações. Use o mouse ou W/S + Enter.
 ROM e saves ficam em %LOCALAPPDATA%\GenissonEmilio\NewSuperMarioBrosPC.

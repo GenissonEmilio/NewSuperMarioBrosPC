@@ -35,7 +35,7 @@ public static class Verification
             if(s.Touch is {Length:2}){game.Input.Touch=new(s.Touch[0],s.Touch[1]);game.PointerHeld=true;}
             if(s.Command=="pause")game.Pause(true);
             if(s.Command=="resume")game.Pause(false);
-            if(s.Command=="swap")game.Swap();
+            if(s.Command=="map"){game.Pause(true);ui.Panel=Panel.Map;}
             if(s.Command=="reserve")game.Reserve();
             long before=game.Core!.Frames;
             for(int n=0;n<s.Frames;n++)game.Tick();
@@ -80,6 +80,40 @@ public static class Verification
         }
         foreach(var panel in new[]{Panel.Controls,Panel.Settings,Panel.Pause})
         {ui.Panel=panel;using var b=new Bitmap(1280,800);using var g=Graphics.FromImage(b);ui.Draw(g,b.Size,p,null);b.Save(Path.Combine(output,panel+".png"));Check("menu clickable "+panel,ui.Hits.Count>0);}
+        p=new Profile();ui.Panel=Panel.Play;
+        using(var frame=new Bitmap(256,384))
+        {
+            using(var fg=Graphics.FromImage(frame))
+            {
+                fg.Clear(Color.CornflowerBlue);fg.FillRectangle(Brushes.Peru,0,160,256,32);
+                fg.FillRectangle(Brushes.LightGray,0,192,256,192);
+                fg.FillRectangle(Brushes.Gold,0,192+104,168,80);
+                fg.FillRectangle(Brushes.LimeGreen,184,192+120,64,64);
+                fg.FillRectangle(Brushes.Navy,0,192+32,256,64);
+            }
+            foreach(int scene in new[]{3,9,4})
+            {
+                using var b=new Bitmap(1280,800);using var g=Graphics.FromImage(b);
+                ui.Draw(g,b.Size,p,null,new GameView(frame,scene,scene==4));
+                b.Save(Path.Combine(output,$"layout-scene-{scene}.png"));
+                Check("one main viewport scene "+scene,b.GetPixel(500,300).ToArgb()==(scene==4?Color.Navy:Color.CornflowerBlue).ToArgb());
+                if(scene==3){Check("reserve hit box exists",ui.Hits.Any(h=>h.Id=="reserve"));Check("reserve crop comes from correct location",b.GetPixel(1130,520).ToArgb()==Color.LimeGreen.ToArgb());}
+                Check("no screen swap action",!ui.Hits.Any(h=>h.Id=="screen" || h.Id=="swap"));
+                if(scene is 3 or 9)
+                {
+                    ui.Panel=Panel.Map;ui.Draw(g,b.Size,p,null,new GameView(frame,scene,false,frame));
+                    b.Save(Path.Combine(output,$"map-scene-{scene}.png"));
+                    Check("map has dedicated close",ui.Hits.Any(h=>h.Id=="back"));
+                    Check("map does not retain game HUD hitboxes",!ui.Hits.Any(h=>h.Id=="reserve"));
+                    if(scene==9)Check("world map has eight PC buttons",ui.Hits.Count(h=>h.Id.StartsWith("world:"))==8);
+                    ui.Panel=Panel.Play;
+                }
+            }
+        }
+        Check("map default M",p.Bindings[ActionKey.Map]==Keys.M);
+        Check("world map stays main scene",!GameSession.UseMenuSurface(9,true));
+        Check("menu gets single main surface",GameSession.UseMenuSurface(4,true));
+        Check("cinematic does not show blank menu",!GameSession.UseMenuSurface(4,false));
         bool rejected=false;try{RomImport.Validate(new byte[1024]);}catch(InvalidDataException){rejected=true;}Check("invalid ROM rejected",rejected);
         var result=new{success=checks.All(c=>(bool)c.GetType().GetProperty("pass")!.GetValue(c)!),checks};
         File.WriteAllText(Path.Combine(output,"self-test.json"),JsonSerializer.Serialize(result,Json));return result.success?0:1;

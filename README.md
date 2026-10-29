@@ -21,7 +21,7 @@ Não distribuímos ROM, firmware/BIOS da Nintendo, saves, texturas ou músicas. 
 | Usar item reserva | E ou botão no HUD |
 | Confirmar / voltar no jogo | Enter / Backspace |
 | Pause original (Start) | P |
-| Alternar tela / acessar informação adicional | Tab |
+| Abrir / fechar mapa e progresso | M ou botão Mapa |
 | Menu PC / pausa | Esc |
 | Tela cheia | F11 |
 
@@ -29,7 +29,11 @@ Abra **Controles** no início ou na pausa, clique na ação e pressione a tecla 
 
 ## Uma tela
 
-A campanha ocupa uma única área de jogo em 4:3, sem esticar a imagem. Os menus originais e o mapa-múndi assumem essa área quando necessário. A introdução usa a imagem principal enquanto a outra tela fica preta. Nas fases, informações da tela inferior são recortadas da saída ao vivo e reunidas no HUD, com acesso ao item reserva por tecla ou clique. Tab permite consultar a outra tela. Configurações oferece seleção automática, superior fixa ou inferior fixa, filtro de pixels, volume e tela cheia.
+A campanha ocupa uma única área de jogo em 4:3, sem esticar a imagem. **Não existe comando de alternar telas nem modo de duas telas.** Os menus originais usam essa mesma área durante a seleção de arquivo; a aventura e o mapa-múndi usam a cena principal.
+
+Nas fases, vidas e mundo aparecem à esquerda, o item reserva vira um botão à direita e a pontuação, moedas estrela e progresso ficam na faixa inferior. Moedas comuns e tempo permanecem sobre a fase. As informações são recortadas da saída ao vivo da ROM e recompostas pelo frontend; não são valores inventados.
+
+**M / Mapa** abre um painel de PC e pausa a simulação: na fase ele mostra o progresso e uma prévia do último mapa visitado; no mapa-múndi mostra a rota e oito botões de seleção de mundo que respeitam os desbloqueios do jogo original. Esc ou M fecha o painel. A prévia do mapa é histórica, e não um mapa atualizado do interior da fase. Configurações oferece filtro de pixels, volume e tela cheia.
 
 Esc e perda de foco congelam a simulação. As teclas mantidas durante a pausa são liberadas, exigindo uma nova pressão ao retomar. Sair normalmente cria um snapshot e mantém uma cópia do anterior. O save de cartucho continua sob responsabilidade do jogo original; use suas opções de salvar. **Iniciar pelo menu original** ignora o snapshot e permite usar esse save.
 
@@ -47,7 +51,7 @@ cd NewSuperMarioBrosPC
 ./scripts/build-core.ps1 -ToolchainPath C:/tools/w64devkit
 dotnet build src/MarioPC -c Release
 dotnet src/MarioPC/bin/Release/net9.0-windows/MarioPC.dll --self-test local/self-test
-./scripts/package-windows.ps1
+./scripts/package-windows.ps1 -ToolchainPath C:/tools/w64devkit
 ```
 
 Para executar a build sem publish, copie `core/melonds/melonds_libretro.dll` para a pasta de saída do frontend. Para testes locais com sua própria ROM, o modo `--verify ROM PASTA [SCRIPT.json]` usa entrada interna e não abre janelas. `scripts/verify-rom.py` permite testar o núcleo separadamente com Python/Pillow. Resultados contêm dados privados do jogo e **não devem ser publicados**. A CI pública nunca recebe ROM.

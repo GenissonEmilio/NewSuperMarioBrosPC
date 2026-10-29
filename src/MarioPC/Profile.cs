@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace MarioPC;
 
-public enum ActionKey { Up, Down, Left, Right, Jump, Run, Reserve, Confirm, Back, GamePause, Alternate, Pause, Fullscreen }
+public enum ActionKey { Up, Down, Left, Right, Jump, Run, Reserve, Confirm, Back, GamePause, Map, Pause, Fullscreen }
 
 public sealed class Profile
 {
@@ -11,13 +11,12 @@ public sealed class Profile
     public int Volume { get; set; } = 75;
     public bool Smooth { get; set; }
     public bool Fullscreen { get; set; }
-    public string ScreenMode { get; set; } = "Auto";
     public static Dictionary<ActionKey, Keys> Defaults() => new()
     {
         [ActionKey.Up]=Keys.W, [ActionKey.Down]=Keys.S, [ActionKey.Left]=Keys.A, [ActionKey.Right]=Keys.D,
         [ActionKey.Jump]=Keys.Space, [ActionKey.Run]=Keys.ShiftKey, [ActionKey.Reserve]=Keys.E,
         [ActionKey.Confirm]=Keys.Enter, [ActionKey.Back]=Keys.Back, [ActionKey.GamePause]=Keys.P,
-        [ActionKey.Alternate]=Keys.Tab, [ActionKey.Pause]=Keys.Escape, [ActionKey.Fullscreen]=Keys.F11
+        [ActionKey.Map]=Keys.M, [ActionKey.Pause]=Keys.Escape, [ActionKey.Fullscreen]=Keys.F11
     };
     static readonly JsonSerializerOptions Options = new() { WriteIndented=true, Converters={new JsonStringEnumConverter()} };
     public static Profile Load(string root)
@@ -32,7 +31,6 @@ public sealed class Profile
         // A damaged profile must never leave ambiguous hotkeys.
         if(p.Bindings.Values.Distinct().Count()!=Defaults().Count) p.Bindings=Defaults();
         p.Volume=Math.Clamp(p.Volume,0,100);
-        if(p.ScreenMode is not ("Auto" or "Top" or "Bottom")) p.ScreenMode="Auto";
         return p;
     }
     public void Save(string root)

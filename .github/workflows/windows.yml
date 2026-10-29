@@ -36,6 +36,13 @@ jobs:
         run: |
           dotnet src/MarioPC/bin/Release/net9.0-windows/MarioPC.dll --self-test local/self-test
           if ($LASTEXITCODE -ne 0) { throw 'Self-test failed' }
+      - name: C# core integration with original synthetic DS fixture
+        shell: pwsh
+        run: |
+          Copy-Item core/melonds/melonds_libretro.dll src/MarioPC/bin/Release/net9.0-windows/
+          python scripts/make-testrom.py local/fixture.nds
+          dotnet src/MarioPC/bin/Release/net9.0-windows/MarioPC.dll --verify local/fixture.nds local/fixture-check
+          if ($LASTEXITCODE -ne 0) { Get-Content src/MarioPC/bin/Release/net9.0-windows/verification-error.log -ErrorAction SilentlyContinue; throw 'Core integration failed' }
       - name: Package regression tests
         run: python -m unittest discover -s tests
       - name: Package and audit
@@ -47,4 +54,5 @@ jobs:
           path: |
             artifacts/v0.1.0-alpha.1/*
             local/self-test/*
+            local/fixture-check/verification.json
           if-no-files-found: error
